@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    [data-swapbackground] {
+        & > * {
+            @apply opacity-0 absolute left-0 top-0 right-0 bottom-0 bg-no-repeat bg-cover transition-opacity duration-[2000ms];
+        }
+
+        & > [data-swapbackground-active] {
+            @apply opacity-100;
+        }
+    }
+}
