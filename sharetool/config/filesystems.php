@@ -57,6 +57,12 @@ return [
             'throw' => false,
         ],
 
+        'user-uploads' => [
+            'driver' => 'local',
+            'root' => storage_path('app/user-content'),
+            'serve' => true,
+            'throw' => true,
+        ],
     ],
 
     /*
