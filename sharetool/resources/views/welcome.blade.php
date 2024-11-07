@@ -30,7 +30,7 @@
 
                         <div class="p-6 sm:pt-5">
                             <p class="my-4 text-sm/relaxed">
-                                ShareTool lets you easily share images, videos and files with your friends.
+                                {{ __('ShareTool lets you easily share images, videos and files with your friends.') }}
                             </p>
 
                             @if (Route::has('login'))

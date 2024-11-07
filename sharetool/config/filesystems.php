@@ -58,6 +58,10 @@ return [
         ],
 
         'user-uploads' => [
+            // TODO: Switch this over to S3.
+            // This which would let us use temporary upload urls, which makes large uploads easier.
+            // Also, S3 supports setting response header in temporary download urls, which avoids the need to override
+            // the serve() method of the local driver.
             'driver' => 'local',
             'root' => storage_path('app/user-content'),
             'serve' => true,

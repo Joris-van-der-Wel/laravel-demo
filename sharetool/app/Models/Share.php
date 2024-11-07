@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\NotSet;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -83,7 +84,28 @@ class Share extends Model
         return $this->hasMany(ShareAuditLog::class, 'share_id');
     }
 
-    public static function whereHasAccess(?User $user): Builder {
+    public function addAuditLog(string $type, array $details = []): ShareAuditLog {
+        $log = new ShareAuditLog;
+        $log->share_id = $this->id;
+        $log->timestamp = Carbon::now();
+        $log->file_id = null;
+        $log->user_id = auth()->user()?->id;
+        $log->type = $type;
+        $log->details = json_encode($details);
+        $log->save();
+        return $log;
+    }
+
+    // todo can we extend the laravel builder?
+
+    /**
+     * Select all shares where the given user has at least permission to read it.
+     */
+    public static function whereUserHasAccess(User | NotSet | null $user = new NotSet): Builder {
+        if ($user instanceof NotSet) {
+            $user = auth()->user();
+        }
+
         if (!$user) {
             return Share::where('id', null);
         }

@@ -70,4 +70,16 @@ class File extends Model
     {
         return $this->hasMany(ShareAuditLog::class, 'file_id');
     }
+
+    public function addAuditLog(string $type, array $details = []): ShareAuditLog {
+        $log = new ShareAuditLog;
+        $log->share_id = $this->share_id;
+        $log->timestamp = Carbon::now();
+        $log->file_id = $this->id;
+        $log->user_id = auth()->user()?->id;
+        $log->type = $type;
+        $log->details = json_encode($details);
+        $log->save();
+        return $log;
+    }
 }

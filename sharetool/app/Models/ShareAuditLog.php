@@ -14,8 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $share_id
  * @property ?string $file_id
  * @property ?int $user_id
- * @property string $type
- * @property array $details
+ * @property string $type 'share_create' | 'share_update' | 'share_delete' |
+ *                        'share_access_change' | 'file_create' | 'file_update' |
+ *                        'file_delete' | 'file_download' |
+ * @property string $details JSON
  */
 class ShareAuditLog extends Model
 {

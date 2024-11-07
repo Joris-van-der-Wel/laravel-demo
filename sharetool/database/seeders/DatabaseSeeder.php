@@ -18,26 +18,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $userUploadsFs = Storage::disk('user-uploads');
-        $fileSequence = [];
-
-        for ($i = 0; $i <= 9; $i++) {
-            $source_path = __DIR__ . "/../../resources/images/background/$i.jpg";
-            $handle = fopen($source_path, 'r');
-            try {
-                $fs_path = "fake/$i.jpg";
-                $userUploadsFs->writeStream($fs_path, $handle);
-                $fileSequence[] = [
-                    'fs_path' => $fs_path,
-                    'size' => filesize($source_path),
-                ];
-            }
-            finally {
-                fclose($handle);
-            }
-        }
-
-        DB::transaction(function () use ($fileSequence) {
+        DB::transaction(function () {
             $users_count = 3;
             $users = User::factory($users_count)
                 ->sequence(
@@ -85,10 +66,9 @@ class DatabaseSeeder extends Seeder
                     ]);
             }
 
-            File::factory(100)
+            $files = File::factory(100)
                 ->recycle($shares)
                 ->recycle($users)
-                ->sequence(...$fileSequence)
                 ->hasAuditLogs(1, function (array $attributes, File $file) {
                     return [
                         'share_id' => $file->share_id,
@@ -106,6 +86,22 @@ class DatabaseSeeder extends Seeder
                     ];
                 })
                 ->create();
+
+            foreach ($files as $file) {
+                $i = fake()->numberBetween(0, 9);
+                $path = __DIR__ . "/../../resources/images/background/$i.jpg";
+
+                $file->fs_path = "$share->id/$file->id/$file->name";
+                $file->size = filesize($path);
+
+                Storage::disk('user-uploads')->putFileAs(
+                    "$share->id/$file->id",
+                    new \Illuminate\Http\File($path),
+                    $file->name,
+                );
+
+                $file->save();
+            }
         });
     }
 }
