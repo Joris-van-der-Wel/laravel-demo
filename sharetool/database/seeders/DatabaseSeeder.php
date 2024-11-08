@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Jobs\MakeFileThumbnail;
 use App\Models\File;
 use App\Models\Share;
 use App\Models\ShareAuditLog;
@@ -101,6 +102,7 @@ class DatabaseSeeder extends Seeder
                 );
 
                 $file->save();
+                MakeFileThumbnail::dispatch($file);
             }
         });
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Events\FileCreated;
 use App\Models\File;
 use App\Models\Share;
+use App\Jobs\MakeFileThumbnail;
 use Facades\App\Services\ShareAuthorization;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,7 @@ new class extends Component {
 
         $this->dispatch('file-created', $file->id);
         broadcast(new FileCreated($file->share_id, $file->id));
+        MakeFileThumbnail::dispatch($file);
     }
 }
 

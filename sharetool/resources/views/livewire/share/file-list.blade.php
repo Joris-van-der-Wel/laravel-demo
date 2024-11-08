@@ -28,6 +28,7 @@ new class extends Component {
 
     #[On('echo-private:shares.{shareId},FileCreated')]
     #[On('echo-private:shares.{shareId},FileDeleted')]
+    #[On('echo-private:shares.{shareId},FileThumbnailReady')]
     public function handleEchoFileCreatedDeleted(): void
     {
         unset($this->files);
@@ -66,7 +67,15 @@ new class extends Component {
                 wire:click.prevent="selectFile('{{$file->id}}')"
             >
                 <div class="flex-grow flex justify-center align-middle">
-                    <img class="w-auto h-auto" src="{{ Vite::asset('resources/images/document.svg') }}" width="100" height="100"/>
+                    @php
+                        if ($file->webp_thumbnail) {
+                            $url = 'data:image/webp;base64,' . base64_encode($file->webp_thumbnail);
+                        } else {
+                            $url = Vite::asset('resources/images/document.svg');
+                        }
+                    @endphp
+
+                    <img class="w-[140px] h-[140px]" src="{{ $url }}" width="100" height="100" alt="Thumbnail of {{ $file->name }}"/>
                 </div>
                 <div class="text-center h-12">
                     {{ $file->name }}
