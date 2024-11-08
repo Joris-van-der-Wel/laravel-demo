@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Events\FileDeleted;
 use App\Models\File;
 use App\Models\Share;
 use Facades\App\Services\ShareAuthorization;
@@ -46,6 +47,7 @@ new class extends Component {
         Storage::disk('user-uploads')->delete($file->fs_path);
 
         $this->dispatch('file-deleted', $file->id);
+        broadcast(new FileDeleted($file->share_id, $file->id));
     }
 }
 

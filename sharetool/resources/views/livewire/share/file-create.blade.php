@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Events\FileCreated;
 use App\Models\File;
 use App\Models\Share;
 use Facades\App\Services\ShareAuthorization;
@@ -36,7 +37,7 @@ new class extends Component {
         return Share::where('id', $this->shareId)->firstOrFail();
     }
 
-    public function save()
+    public function save(): void
     {
         $this->validate();
         $share = $this->share();
@@ -67,6 +68,7 @@ new class extends Component {
         # todo add thumbnail generation to queue if it's an image
 
         $this->dispatch('file-created', $file->id);
+        broadcast(new FileCreated($file->share_id, $file->id));
     }
 }
 

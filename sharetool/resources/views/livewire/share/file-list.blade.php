@@ -26,6 +26,14 @@ new class extends Component {
         return $this->share()->files()->orderBy('name')->get();
     }
 
+    #[On('echo-private:shares.{shareId},FileCreated')]
+    #[On('echo-private:shares.{shareId},FileDeleted')]
+    public function handleEchoFileCreatedDeleted(): void
+    {
+        unset($this->files);
+        unset($this->share);
+    }
+
     public function selectFile(?string $fileId): void
     {
         $this->dispatch('file-select', fileId: $fileId);
