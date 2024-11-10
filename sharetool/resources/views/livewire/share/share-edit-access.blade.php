@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 use App\Models\Share;
 use App\Models\User;
-use Facades\App\Services\ShareAuthorization;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -55,9 +55,7 @@ new class extends Component {
         $share = DB::transaction(function () {
             $share = Share::where('id', $this->shareId)->firstOrFail();
 
-            if (!ShareAuthorization::hasSharePermission($share, 'owner')) {
-                return null;
-            }
+            Gate::authorize('updateAccess', $share);
 
             $sync = [];
             foreach ($this->permissions as $userId => ['permission' => $permission]) {
@@ -102,7 +100,7 @@ new class extends Component {
 ?>
 <div>
     <form wire:submit="save">
-        @if (ShareAuthorization::hasSharePermission($this->share, 'owner'))
+        @can('updateAccess', $this->share)
             <table class="w-full my-4">
                 <thead>
                 <tr>
@@ -159,6 +157,6 @@ new class extends Component {
             </div>
         @else
             No access
-        @endif
+        @endcan
     </form>
 </div>

@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use App\Exceptions\ShareInvalidPasswordException;
 use App\Models\Share;
-use Facades\App\Services\ShareAuthorization;
+use App\ShareAccessDenyReason;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -28,17 +29,23 @@ class extends Component {
         // This component is used in two routes. The first requires a session using the regular
         // auth middleware. The second does not check for a session, but requires a publicToken
 
+        $share = Share::where('id', $this->shareId)->firstOrFail();
         try {
-            return ShareAuthorization::authorizeShare($this->shareId, $this->publicToken);
+            Gate::authorize('view', [$share, $this->publicToken]);
+            return $share;
 
-        } catch (ShareInvalidPasswordException) {
-            if ($this->publicToken) {
-                $url = route('publicShare.login', ['shareId' => $this->shareId, 'publicToken' => $this->publicToken]);
-            } else {
-                $url = route('share.login', ['shareId' => $this->shareId]);
+        } catch (AuthorizationException $e) {
+            if ($e->getCode() === ShareAccessDenyReason::InvalidSharePassword) {
+                if ($this->publicToken) {
+                    $url = route('publicShare.login', ['shareId' => $this->shareId, 'publicToken' => $this->publicToken]);
+                } else {
+                    $url = route('share.login', ['shareId' => $this->shareId]);
+                }
+                $this->redirect($url);
+                return new Share;
             }
-            $this->redirect($url);
-            return new Share;
+
+            throw $e;
         }
     }
 
@@ -71,9 +78,7 @@ class extends Component {
     {
         $share = $this->share();
 
-        if (!ShareAuthorization::hasSharePermission($share, 'owner')) {
-            return;
-        }
+        Gate::authorize('delete', $share);
 
         DB::transaction(function () use ($share) {
             $share->addAuditLog('share_delete');
@@ -90,25 +95,34 @@ class extends Component {
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight flex-grow">
                     {{ __('Share') }}: {{ $this->share->name }}
                 </h2>
-                @if (ShareAuthorization::hasSharePermission($this->share, 'owner'))
-                    <div class="flex flex-row gap-2">
+                <div class="flex flex-row gap-2">
+                    @can('viewAudit', $this->share)
                         <x-secondary-button wire:click.prevent="$dispatch('open-modal', 'share-audit')">
                             {{ __('Audit Log…') }}
                         </x-secondary-button>
+                    @endcan
+
+                    @can('update', $this->share)
                         <x-secondary-button wire:click.prevent="$dispatch('open-modal', 'share-edit')">
                             {{ __('Edit…') }}
                         </x-secondary-button>
+                    @endcan
+
+                    @can('updateAccess', $this->share)
                         <x-secondary-button wire:click.prevent="$dispatch('open-modal', 'share-edit-access')">
                             {{ __('Permissions…') }}
                         </x-secondary-button>
+                    @endcan
+
+                    @can ('delete', $this->share)
                         <x-danger-button
                             wire:click.prevent="$dispatch('open-modal', 'share-delete')"
                             type="button"
                         >
                             {{ __('Delete…') }}
                         </x-danger-button>
-                    </div>
-                @endif
+                   @endcan
+                </div>
             </div>
             <div>
                 {{ __('Created') }}: {{ $this->share->created_at?->diffForHumans() }}<br/>
@@ -136,14 +150,14 @@ class extends Component {
     </header>
 
     <div class="my-12 max-w-7xl mx-auto sm:px-6 lg:px-8 flex justify-center">
-        @if (ShareAuthorization::hasSharePermission($this->share, 'write'))
+        @can ('createFile', $this->share)
             <x-primary-button
                 type="button"
                 wire:click.prevent="$dispatch('open-modal', 'file-create')"
             >
                 {{ __('Upload new file…') }}
             </x-primary-button>
-        @endif
+        @endcan
     </div>
 
     <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">

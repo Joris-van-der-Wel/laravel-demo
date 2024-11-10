@@ -5,7 +5,7 @@ use App\Events\FileCreated;
 use App\Models\File;
 use App\Models\Share;
 use App\Jobs\MakeFileThumbnail;
-use Facades\App\Services\ShareAuthorization;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,9 +43,7 @@ new class extends Component {
         $this->validate();
         $share = $this->share();
 
-        if (!ShareAuthorization::hasSharePermission($share, 'write')) {
-            return;
-        }
+        Gate::authorize('createFile', $share);
 
         $file = new File;
         $file->id = Str::ulid()->toBase32();

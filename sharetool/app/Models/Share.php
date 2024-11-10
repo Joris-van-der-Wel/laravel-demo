@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\NotSet;
+use App\SharePermission;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -72,6 +73,34 @@ class Share extends Model
         return $this->belongsToMany(User::class, 'share_user_access')
             ->withPivot('permission')
             ->as('user_access');
+    }
+
+    /**
+     * Returns the permission level the given user has to this share.
+     */
+    public function getUserPermission(?User $user): SharePermission {
+        if (!$user) {
+            return SharePermission::None;
+        }
+
+        if ($user->id === $this->owner_id) {
+            return SharePermission::Owner;
+        }
+
+        $permission = $this->userAccess()
+            ->where('user_id', $user->id)
+            ->first()
+            ?->user_access
+            ->permission;
+
+        if ($permission === 'read') {
+            return SharePermission::Read;
+        }
+        else if ($permission === 'write') {
+            return SharePermission::Write;
+        }
+
+        return SharePermission::None;
     }
 
     /**

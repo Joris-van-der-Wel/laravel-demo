@@ -77,7 +77,7 @@ new class extends Component {
 
                     <img class="w-[140px] h-[140px]" src="{{ $url }}" width="100" height="100" alt="Thumbnail of {{ $file->name }}"/>
                 </div>
-                <div class="text-center h-12">
+                <div class="text-center h-12 break-words">
                     {{ $file->name }}
                 </div>
             </a>

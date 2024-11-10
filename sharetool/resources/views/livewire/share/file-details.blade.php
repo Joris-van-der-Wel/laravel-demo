@@ -4,7 +4,6 @@ declare(strict_types=1);
 use App\Events\FileDeleted;
 use App\Models\File;
 use App\Models\Share;
-use Facades\App\Services\ShareAuthorization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
@@ -88,14 +87,14 @@ new class extends Component {
                     {{ __('Download') }}
                 </a>
             </div>
-            @if (ShareAuthorization::hasSharePermission($this->share, 'write'))
+            @can('delete', $this->file)
                 <x-danger-button
                     type="button"
                     wire:click.prevent="$dispatch('open-modal', 'file-delete')"
                 >
                     {{ __('Delete…') }}
                 </x-danger-button>
-            @endif
+            @endcan
         </div>
 
         <x-delete-modal name="file-delete" action="deleteFile">

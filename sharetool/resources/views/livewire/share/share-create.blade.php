@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Models\Share;
 use Facades\App\Services\SecureRandom;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Validate;
@@ -24,9 +25,7 @@ new class extends Component {
 
     public function save()
     {
-        if (!auth()->user()) {
-            return;
-        }
+        Gate::authorize('create', Share::class);
 
         $this->validate();
 

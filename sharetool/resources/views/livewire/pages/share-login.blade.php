@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use App\Exceptions\ShareInvalidPasswordException;
-use App\Exceptions\ShareLoginRateLimited;
 use App\Models\Share;
-use Facades\App\Services\ShareAuthorization;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -26,7 +26,10 @@ class extends Component {
     {
         // This component is used in two routes. The first requires a session using the regular
         // auth middleware. The second does not check for a session, but requires a publicToken
-        return ShareAuthorization::authorizeShare($this->shareId, $this->publicToken, skipPasswordCheck: true);
+
+        $share = Share::where('id', $this->shareId)->firstOrFail();
+        Gate::authorize('viewShareLogin', [$share, $this->publicToken]);
+        return $share;
     }
 
     #[Validate('required|string')]
@@ -35,20 +38,28 @@ class extends Component {
     public function login(): void
     {
         $this->validate();
-
         $share = $this->share();
-        try {
-            ShareAuthorization::shareLogin($share, $this->password);
-        } catch (ShareLoginRateLimited $ex) {
+        $throttleKey = $share->id . '|' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
             throw ValidationException::withMessages([
                 'password' => __('auth.throttle', [
-                    'seconds' => $ex->availableInSeconds,
-                    'minutes' => ceil($ex->availableInSeconds / 60),
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
                 ]),
             ]);
-        } catch (ShareInvalidPasswordException) {
+        }
+
+        if (!$share->password || !Hash::check($this->password, $share->password)) {
+            RateLimiter::hit($throttleKey);
             throw ValidationException::withMessages(['password' => __('Invalid password')]);
         }
+
+        // store the password hash so that if the share owner changes the password,
+        // the existing sessions are no longer valid
+        session(["share-password.$share->id" => $share->password]);
 
         if ($this->publicToken) {
             $url = route('publicShare.details', ['shareId' => $share->id, 'publicToken' => $this->publicToken]);

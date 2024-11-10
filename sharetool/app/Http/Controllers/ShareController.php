@@ -2,23 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Share;
-use App\Services\ShareAuthorization;
+use App\Models\File;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class ShareController extends Controller
 {
-    public function __construct(protected ShareAuthorization $shareAuthorization)
+    private function redirectToFileUrl(File $file): RedirectResponse
     {
-    }
-
-    private function redirectToFileUrl(Share $share, string $fileId): RedirectResponse
-    {
-        $file = $share->files()
-            ->where('id', $fileId)
-            ->firstOrFail();
-
         $url = Storage::disk('user-uploads')->temporaryUrl(
             $file->fs_path,
             now()->addMinutes(5),
@@ -36,14 +28,24 @@ class ShareController extends Controller
 
     public function downloadFile(string $shareId, string $fileId): RedirectResponse
     {
-        $share = $this->shareAuthorization->authorizeShare($shareId);
-        return $this->redirectToFileUrl($share, $fileId);
+        $file = File::where('id', $fileId)
+            ->where('share_id', $shareId)
+            ->firstOrFail();
+
+        Gate::authorize('view', $file);
+
+        return $this->redirectToFileUrl($file);
     }
 
     // Careful: auth middleware is not enabled for this route
-    public function downloadFilePublic(string $shareId, string $token, string $fileId): RedirectResponse
+    public function downloadFilePublic(string $shareId, string $publicToken, string $fileId): RedirectResponse
     {
-        $share = $this->shareAuthorization->authorizeShare($shareId, publicToken: $token);
-        return $this->redirectToFileUrl($share, $fileId);
+        $file = File::where('id', $fileId)
+            ->where('share_id', $shareId)
+            ->firstOrFail();
+
+        Gate::authorize('view', [$file, $publicToken]);
+
+        return $this->redirectToFileUrl($file);
     }
 }

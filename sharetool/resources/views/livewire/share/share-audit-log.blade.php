@@ -6,7 +6,6 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Reactive;
 use Livewire\Volt\Component;
-use Facades\App\Services\ShareAuthorization;
 
 new class extends Component {
     #[Locked]
@@ -22,7 +21,7 @@ new class extends Component {
 
 ?>
 <div>
-    @if (ShareAuthorization::hasSharePermission($this->share, 'owner'))
+    @can('viewAudit', $this->share)
         <table class="w-full">
             <thead>
             <tr>
@@ -53,5 +52,5 @@ new class extends Component {
         </table>
     @else
         No access
-    @endif
+    @endcan
 </div>

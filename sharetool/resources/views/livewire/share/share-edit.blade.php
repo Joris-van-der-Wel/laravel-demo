@@ -4,8 +4,8 @@ declare(strict_types=1);
 use App\Models\Share;
 use App\Constants;
 use Facades\App\Services\SecureRandom;
-use Facades\App\Services\ShareAuthorization;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -53,9 +53,7 @@ new class extends Component {
             // query the share again to avoid acting on and old cached instance of Share
             $share = Share::where('id', $this->shareId)->firstOrFail();
 
-            if (!ShareAuthorization::hasSharePermission($share, 'owner')) {
-                return null;
-            }
+            Gate::authorize('update', $share);
 
             $share->name = $this->name;
             $share->description = $this->description;
