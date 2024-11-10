@@ -9,5 +9,5 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('shares.{id}', function (User $user, string $id) {
-    return Share::whereUserHasAccess($user)->where('id', $id)->exists();
+    return Share::where('id', $id)->whereUserHasAccess($user)->exists();
 });
