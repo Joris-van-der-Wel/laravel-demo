@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('shares', function (Blueprint $table) {
-            $table->ulid('id')->index();
+            $table->ulid('id')->primary();
             $table->timestamps();
             $table->softDeletes();
             $table->foreignId('owner_id')->constrained('users');
@@ -21,7 +21,7 @@ return new class extends Migration
         });
 
         Schema::create('share_user_access', function (Blueprint $table) {
-            $table->id();
+            $table->id()->primary();
             $table->foreignUlid('share_id')->constrained('shares');
             $table->foreignId('user_id')->constrained('users');
             $table->unique(['user_id', 'share_id'], 'user_share_unique');
@@ -29,7 +29,7 @@ return new class extends Migration
         });
 
         Schema::create('files', function (Blueprint $table) {
-            $table->ulid('id')->index();
+            $table->ulid('id')->primary();
             $table->timestamps();
             $table->softDeletes();
             $table->foreignUlid('share_id')->constrained('shares');
@@ -42,7 +42,7 @@ return new class extends Migration
         });
 
         Schema::create('share_audit_logs', function (Blueprint $table) {
-            $table->id();
+            $table->id()->primary();
             $table->timestamp('timestamp')->useCurrent();
             $table->foreignUlid('share_id')->constrained('shares');
             $table->foreignUlid('file_id')->nullable()->constrained('files');
