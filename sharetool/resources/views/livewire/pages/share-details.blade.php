@@ -80,10 +80,14 @@ class extends Component {
 
         Gate::authorize('delete', $share);
 
+        // avoid rendering a 404, going to redirect anyway
+        $this->skipRender();
+
         DB::transaction(function () use ($share) {
             $share->addAuditLog('share_delete');
             $share->delete();
         });
+
         $this->redirectRoute('share.overview');
     }
 }

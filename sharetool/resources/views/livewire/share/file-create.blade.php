@@ -33,15 +33,19 @@ new class extends Component {
     public string $description = '';
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 
     public function save(): void
     {
         $this->validate();
         $share = $this->share();
+
+        if (!$share) {
+            return;
+        }
 
         Gate::authorize('createFile', $share);
 

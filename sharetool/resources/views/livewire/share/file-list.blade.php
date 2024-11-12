@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
@@ -15,15 +15,18 @@ new class extends Component {
     public string $shareId;
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 
     #[Computed]
     public function files(): Collection
     {
-        return $this->share()->files()->orderBy('name')->get();
+        $share = $this->share();
+        return $share
+            ? $share->files()->orderBy('name')->get()
+            : collect();
     }
 
     #[On('echo-private:shares.{shareId},FileCreated')]

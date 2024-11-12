@@ -13,15 +13,15 @@ new class extends Component {
     public string $shareId;
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 }
 
 ?>
 <div>
-    @can('viewAudit', $this->share)
+    @if ($this->share && Gate::allows('viewAudit', $this->share))
         <table class="w-full">
             <thead>
             <tr>
@@ -51,6 +51,6 @@ new class extends Component {
             </tbody>
         </table>
     @else
-        No access
-    @endcan
+        Share has been deleted or insufficient access
+    @endif
 </div>

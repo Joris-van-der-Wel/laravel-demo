@@ -21,20 +21,23 @@ new class extends Component {
     public string $fileId;
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 
     #[Computed]
     public function file(): ?File
     {
-        return $this->share()->files()->where('id', $this->fileId)->first();
+        return $this->share()?->files()->where('id', $this->fileId)->first();
     }
 
     public function deleteFile(): void
     {
         $file = $this->file();
+        if (!$file) {
+            return;
+        }
 
         $this->dispatch('close-modal', 'file-delete');
         $this->dispatch('close-modal', 'file-details');
@@ -100,5 +103,7 @@ new class extends Component {
         <x-delete-modal name="file-delete" action="deleteFile">
             {{ __('Delete file') }}: {{ $this->file->name }}
         </x-delete-modal>
+    @else
+        File has been deleted or insufficient access
     @endif
 </div>

@@ -33,16 +33,18 @@ new class extends Component {
     public function mount()
     {
         $share = $this->share();
-        $this->name = $share->name;
-        $this->description = $share->description;
-        $this->public = $share->public_token !== null;
-        $this->password = $share->password ? Constants::PASSWORD_SENTINEL : '';
+        if ($share) {
+            $this->name = $share->name;
+            $this->description = $share->description;
+            $this->public = $share->public_token !== null;
+            $this->password = $share->password ? Constants::PASSWORD_SENTINEL : '';
+        }
     }
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 
     public function save()

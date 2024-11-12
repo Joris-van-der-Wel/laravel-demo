@@ -27,13 +27,17 @@ new class extends Component {
         $share = $this->share();
 
         $permissions = [];
-        foreach ($share->userAccess()->orderBy('email')->get() as $user) {
-            $permissions[$user->id] = [
-                'email' => $user->email,
-                'name' => $user->name,
-                'permission' => $user->user_access->permission,
-            ];
+
+        if ($share) {
+            foreach ($share->userAccess()->orderBy('email')->get() as $user) {
+                $permissions[$user->id] = [
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'permission' => $user->user_access->permission,
+                ];
+            }
         }
+
         $this->permissions = $permissions;
     }
 
@@ -43,9 +47,9 @@ new class extends Component {
     }
 
     #[Computed]
-    public function share(): Share
+    public function share(): ?Share
     {
-        return Share::where('id', $this->shareId)->firstOrFail();
+        return Share::where('id', $this->shareId)->first();
     }
 
     public function save(): void
@@ -84,7 +88,7 @@ new class extends Component {
             throw ValidationException::withMessages(['email' => __('No such user')]);
         }
 
-        if (isset($this->permissions[$user->id]) || $user->id === $share->owner_id) {
+        if (isset($this->permissions[$user->id]) || $user->id === $share?->owner_id) {
             throw ValidationException::withMessages(['email' => __('This user has already been added')]);
         }
 
@@ -100,7 +104,7 @@ new class extends Component {
 ?>
 <div>
     <form wire:submit="save">
-        @can('updateAccess', $this->share)
+        @if ($this->share && Gate::allows('updateAccess', $this->share))
             <table class="w-full my-4">
                 <thead>
                 <tr>
@@ -156,7 +160,7 @@ new class extends Component {
                 </x-primary-button>
             </div>
         @else
-            No access
-        @endcan
+            Share has been deleted or insufficient access
+        @endif
     </form>
 </div>
